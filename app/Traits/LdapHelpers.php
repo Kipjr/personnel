@@ -1,9 +1,11 @@
 <?php
 namespace App\Traits;
 
-use Adldap\Auth\BindException;
-use Adldap\Laravel\Facades\Adldap;
-use App\Models\User;
+use LdapRecord\Laravel\Auth\BindException;
+use LdapRecord\Connection;
+use LdapRecord\Container;
+use LdapRecord\Models\ActiveDirectory\User;
+use LdapRecord\Models\ActiveDirectory\Group;
 use App\Models\Info;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -15,8 +17,15 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
  */
 trait LdapHelpers
 {
+    protected $connection;
+
+    public function __construct(){
+        $this->connection = Container::getDefaultConnection();
+       
+    } 
+        
     private function getLdapInfoBy($field, $value){
-        return Adldap::search()
+        return $this->connection->query()
             ->in(config('baragenda.ldap.user_base'))
             ->findBy($field, $value);
     }
@@ -25,7 +34,7 @@ trait LdapHelpers
         if(!preg_match('/^[a-zA-Z0-9 _]+$/', $name)){
             return '';
         }
-        $users = Adldap::search()->users()
+        $users = $this->connection->query()
             ->in(config('baragenda.ldap.user_base'))
             ->rawFilter('(cn=*'.$name.'*)')
             ->limit(10)
@@ -40,30 +49,40 @@ trait LdapHelpers
     }
 
     public function isLdapUser($username, $password){
-        try {
             // We bind the user to check if we can actually sign in
-            Adldap::connect('default', $username, $password);
-            return true;
-        } catch(BindException $e){
-            return $e;
-        }
-    }
+           
+            $user = User::findByOrFail('samaccountname', $username);
+            if ($this->connection->auth()->attempt($user->getDn(),  $password)) {
+                // Credentials are valid!
+                return true;
+            }
+            else {
+                $message = $connection->getLdapConnection()->getDiagnosticMessage();
+                return $message;
+                /* if (strpos($message, '532') !== false) {
+                    return "Your password has expired.";
+                } */
+            }
+    } 
+    
     //todo: fix nesting of groups, get all groups of user while  groups are member of parent Group
     public function getUserGroups($user){
         return $user
-            ->getGroups(['*'], true)
+            ->groups()->recursive()
             ->map(function($obj){ return $obj->distinguishedname[0]; });
     }
 
     public function isUserInGroup($user, $group){
-        return $this->getUserGroups($user)->contains(config('baragenda.ldap.admin_group'));
+        return $user->groups()->exists(config('baragenda.ldap.admin_group'));
+        //return $this->getUserGroups($user)->contains(config('baragenda.ldap.admin_group'));
     }
 
     public function saveLdapUser($user){
         $dbUser = null;
         try {
             // We first check if we already have this user in our database
-            $dbUser = User::findOrFail($user->samaccountname[0]);
+             echo('<pre>');print_r($user); //die;
+            $dbUser = User::findByOrFail('samaccountname',$user['samaccountname']['0']);
         } catch(ModelNotFoundException $e){
             // If not, we create a new user
             $dbUser = new User();
@@ -73,11 +92,11 @@ trait LdapHelpers
         }
         // We update all the information of the user
         $info = $dbUser->info ?: new Info;
-        $info->objectGUID = bin2hex($user->objectguid[0]);
-        $info->lidnummer = $user->employeeNumber[0];
-        $info->relatienummer = $user->employeeId[0];
-        $info->name = $user->cn[0];
-        $info->email = $user->mail[0];
+        $info->objectGUID = bin2hex($user['objectguid'][0]);
+        $info->lidnummer = $user['employeenumber'][0];
+        $info->relatienummer = $user['employeeid'][0];
+        $info->name = $user['cn'][0];
+        $info->email = $user['mail'][0];
         
         // We save the info with relation to user
         $dbUser->info()->save($info);

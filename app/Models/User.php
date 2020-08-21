@@ -1,13 +1,14 @@
 <?php
 
 namespace App\Models;
-
+use LdapRecord\Laravel\Auth\LdapAuthenticatable;
+use LdapRecord\Laravel\Auth\AuthenticatesWithLdap;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable
+class User extends Authenticatable implements LdapAuthenticatable
 {
-    use Notifiable;
+    use Notifiable, AuthenticatesWithLdap;
 
     /**
      * The attributes that are mass assignable.
@@ -30,6 +31,16 @@ class User extends Authenticatable
 	public function info()
     {
         return $this->hasOne('App\Models\Info');
+    }
+
+    public function getLdapDomainColumn()
+    {
+        return 'domain_column';
+    }
+
+    public function getLdapGuidColumn()
+    {
+        return 'guid_column';
     }
 
 }

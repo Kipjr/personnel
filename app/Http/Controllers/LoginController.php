@@ -16,9 +16,9 @@ class LoginController extends Controller
     use LdapHelpers;
     //
     public function login(Request $request){
-        if($request->isMethod('get'))
+        if($request->isMethod('get')){  
             return view('login');
-
+        }
         if(App::environment('local', 'dev')){
             if (User::with('info')->get()->contains('username', strtolower($request->username))){
                 $user=User::where('username',$request->username)->first();
@@ -27,8 +27,6 @@ class LoginController extends Controller
                 return redirect(route('home'));
             }
         }
-
-
         // Do LDAP login stuff
 
         // If we're already logged in we redirect back to the homepage
@@ -38,7 +36,7 @@ class LoginController extends Controller
         // Yay! LDAP login stuff!
         $canLogin = $this->isLdapUser($request->input('username'), $request->input('password'));
         if($canLogin !== true){
-            return view('login', [ 'msg' => $canLogin->getMessage() ]);
+            return view('login', [ 'msg' => $canLogin ]);
         }
 
         // Then we grab the user object from LDAP using the samaccountname
@@ -46,9 +44,9 @@ class LoginController extends Controller
         if($user == null){
             return view('login', ['msg' => 'Something went wrong, contact '.config('baragenda.contact.mail').' for more information (samaccountname not found in base user dn)']);
         }
-
+        //echo('<pre>');print_r($user); die;
         // We check if the user is in the ADLDAP allowed group that we defined in the .env file
-        if($user->memberof == null || !in_array(config('baragenda.ldap.allowed_group'), $user->memberof)){
+        if($user['memberof']['count'] == 0 || !in_array(config('baragenda.ldap.allowed_group'), $user['memberof'])){
             return view('login', ['msg' => 'Something went wrong, contact '.config('baragenda.contact.mail').' for more information (not found in allowed group)']);
         }
 
