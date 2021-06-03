@@ -143,7 +143,7 @@ class AgendaController extends Controller
         $dates['events'] = $this->mergeEventsDateRange($events,$dateList);
         $dates['allDayEvents'] = $this->mergeEventsDateRange($allDayEvents,$dateList);
         $dates['dateList'] = $dateList;
-        echo("<pre>");print_r($dates['allDayEvents']);echo("</pre>");
+        #echo("<pre>");print_r($dates['allDayEvents']);echo("</pre>");
         return $dates;
     }
 
