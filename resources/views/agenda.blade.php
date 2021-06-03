@@ -115,7 +115,7 @@
 												</div>
 												<div class="border-div grid-top-days" style="">
 													<div class="border-div top-days-list " style="">
-														@foreach(array_values($events) as $i => $date)
+														@foreach(array_values($dateList) as $i => $date)
 															<div class="vertDayColumn border-div ">
 																<div class="vertDayColumn-data border-div ">
 																	<div id="dayname_{{$i}}" class="vertDayColumn-dayname border-div ">
@@ -127,7 +127,6 @@
 																</div>
 															</div>
 														@endforeach
-														<div class="p-2 vertDayColumn border-div "></div>
 													</div>
 													<div  class="grid-top-allday border-div" >
 														<div  class="top-allday-data border-div" >
@@ -135,7 +134,7 @@
 																@php
 																	$loopvar = 0;
 																@endphp
-																@foreach($events as $i => $date)
+																@foreach($allDayEvents as $i => $date)
                                                                     @foreach($date['events'] as $j => $event)
 																		@if($event['shape']['size']>=1)
 																			<div style="
@@ -297,7 +296,7 @@
 																<div id="grid_{{$i}}" class="border-div bottom-tabs-gridcell" style="position:relative">
 																	@foreach($date['events'] as $j => $event)
 																		@if($event['shape']['size']<1)
-																			<div onclick="eventModal('{{ $event['object']['google_event_id'] }}')" class="{{ $event['source']='Interne Agenda' ? 'event-button' : 'event-button2'}}"
+																			<div onclick="eventModal('{{ $event['object']['google_event_id'] }}')" class="{{ $event['source']=='Interne Agenda' ? 'event-button' : 'event-button2'}}"
 																			style="z-index: {{$j+15}};top:
 																				@if($event['shape']['pos']<=0.5) {{20/720*24*$event['shape']['pos'] *100}}% {{--20=time;720=total--}}
 																				@else {{((40/720)*(24*($event['shape']['pos']-0.5))+(0.5*24*(20/720))) * 100}}% {{--20&40=time;720=total--}}

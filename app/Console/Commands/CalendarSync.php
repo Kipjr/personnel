@@ -34,6 +34,8 @@ class CalendarSync extends Command
     public function __construct()
     {
         parent::__construct();
+        $config = config('baragenda');
+        $this->google = $config['google'];
     }
 
     /**
@@ -58,8 +60,8 @@ class CalendarSync extends Command
         } else{ $id_local=collect(); }
 
         #get remote $array2 = array("green", "yellow", "red");
-        $events_remote1 = GEvent::get(Carbon::today()->startOfDay()->addMonths(-1), Carbon::today()->addMonths(1),array(),  env('GOOGLE_CALENDAR_ID_PUBLIC')); #public calendar
-        $events_remote2 = GEvent::get(Carbon::today()->startOfDay(), Carbon::today()->addMonths(1),array(),  env('GOOGLE_CALENDAR_ID_PRIVATE')); #private calendar
+        $events_remote1 = GEvent::get(Carbon::today()->startOfDay()->addMonths(-1), Carbon::today()->addMonths(1),array(),  $this->google['calendar']['public']); #public calendar
+        $events_remote2 = GEvent::get(Carbon::today()->startOfDay(), Carbon::today()->addMonths(1),array(),  $this->google['calendar']['private']); #private calendar
         $events_remote=$events_remote1->concat($events_remote2); #combine the collections
 
         $events_remoteParent = $events_remote2->map(function ($ev, $key) {
@@ -148,7 +150,7 @@ class CalendarSync extends Command
                     'all_day'               =>  $item->isAllDayEvent(),
                     'location'              =>  $item->location, #$item.atrendees.email in location.email ? location.id : item.loctionid
                     'attendees'             =>  json_encode($item->attendees),
-                    'entrypoints'           =>  json_encode($item->conferenceData['entryPoints']) ,
+                    'entrypoints'           =>  $item->conferenceData ? json_encode($item->conferenceData['entryPoints']) : null ,
                     'status'                => 'published',
                     'google_calendar_id'    =>  $item->getCalendarId(),
                     'google_event_id'       =>  $item->id,

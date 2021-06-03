@@ -34,5 +34,13 @@ return [
         ],
         'whitelisted_ips' => explode(',', env('BARAGENDA_ACCOUNT_WHITELIST_IPS')),
     ],
+    'google' => [
+        'calendar' => [
+            'public' =>  env('GOOGLE_CALENDAR_ID_PUBLIC'),                
+            'public_name' =>  env('GSUITE_CAL_PUBL_SUMM_DISPLAY'),                
+            'private' =>  env('GOOGLE_CALENDAR_ID_PRIVATE'),                 
+            'private_name' =>  env('GSUITE_CAL_PRIV_SUMM_DISPLAY')                 
+        ]        
+    ]
 
 ];
